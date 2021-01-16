@@ -1,0 +1,90 @@
+﻿@page "/register"
+@using System.Globalization
+@using UI.RegisterationModel
+
+<h3>BUSINESS REGISTERATION</h3>
+
+<div>
+    <RadzenSteps SelectedIndex="currentStep">
+        <Steps>
+            <RadzenStepsItem Text="Profile">
+                <RadzenTextBox Placeholder="Enter business name" Change="@(v => Profile.BusinessName = v)" />
+                <RadzenTextBox Placeholder="Enter owner name" Change="@(v => Profile.OwnerName = v)" />
+
+                <RadzenDropDown AllowClear="true" AllowFiltering="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                @bind-Value=@SelectedCategories Multiple="true" Placeholder="Select categories" Data=@AvailableCategories TextProperty="Name" ValueProperty="Id"
+                                Style="width:400px" />
+
+                <RadzenButton Click="@(args => GoToNextStep())" Text="NEXT STEP" />
+            </RadzenStepsItem>
+
+            <RadzenStepsItem Text="Services" Disabled="@(completeProfileStep == false)">
+                <h5>Go ahead, Add services you delight your customers with</h5>
+
+                <RadzenTextBox Placeholder="name" Change="@(v => Service.Name = v)" />
+                <RadzenTextBox Placeholder="price" Change="@(v => Service.Price = decimal.Parse(v))" />
+
+                <RadzenButton Click="@(args => AddService())" Text="ADD SERVICE" />
+
+                <RadzenDataList WrapItems="true" AllowPaging="true" Data="@Services" TItem="Service">
+                    <Template Context="service">
+                        <RadzenCard Style="width:300px;">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div>Name:</div>
+                                    <b>@service.Name</b>
+                                </div>
+                                <div class="col-md-6">
+                                    <div>Price:</div>
+                                    <b>@String.Format(new CultureInfo("en-US"), "{0:C}", service.Price)</b>
+                                </div>
+                            </div>
+
+                        </RadzenCard>
+                    </Template>
+                </RadzenDataList>
+
+                <RadzenButton Click="@(args => CompleteRegisteration())" Text="COMPLETE REGISTERATION" />
+
+            </RadzenStepsItem>
+        </Steps>
+    </RadzenSteps>
+</div>
+
+@code {
+    int currentStep = 0;
+    Profile Profile = new Profile();
+
+    IEnumerable<int> SelectedCategories = new int[] { };
+
+    IEnumerable<Category> AvailableCategories = Category.Categories;
+
+    List<Service> Services = new List<Service>();
+
+    bool completeProfileStep = false;
+    Service Service = new Service();
+
+    protected override void OnInitialized()
+    {
+
+    }
+    void GoToNextStep()
+    {
+        completeProfileStep = true;
+        currentStep++;
+    }
+    void AddService()
+    {
+        Services.Add(Service);
+        Service = new Service();
+    }
+    void CompleteRegisteration()
+    {
+        Profile.Categories = new List<Category>();
+        foreach (var id in SelectedCategories)
+        {
+            Profile.Categories.Add(AvailableCategories.First(e => e.Id == id));
+        }
+        var RegisterationDto = new RegisterationDto { BusinessProfile = Profile, BusinessServices = Services };
+    }
+}
